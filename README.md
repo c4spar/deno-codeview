@@ -24,7 +24,7 @@
 
 <p align="center">
   <b>Deno Coverage Webview Reporter</b></br>
-  <small>Serve generated code coverage reports in a webview with live reloading</small>
+  <small>Serve generated code coverage reports in a webview with live reloading.</small>
 </p>
 
 <p align="center">
@@ -51,7 +51,7 @@ sudo apt install lcov
 
 ## Permissions
 
-- **--allow-all**: To run test's, coverage and genhtml and to pass all the permission flags to `deno test` which are required by your test's.
+- **--allow-all**: To run test's, coverage, genhtml and the webview and to pass all the permission flags to `deno test` which are required by your test's.
 - **--unstable**: Required for coverage.
 
 ## Installation
