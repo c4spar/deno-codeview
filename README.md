@@ -51,7 +51,8 @@ sudo apt install lcov
 
 ## Permissions
 
-- **--allow-all**: To run test's, coverage, genhtml and the webview and to pass all the permission flags to `deno test` which are required by your test's.
+- **--allow-all**: To run test's, coverage, genhtml and the webview and to pass
+  all the permission flags to `deno test` which are required by your test's.
 - **--unstable**: Required for coverage.
 
 ## Installation
@@ -70,9 +71,9 @@ codeview
 ```
 
 The first argument is the path to the test files/directory (default: `.`) and
-the second the path to the watch files/directory (defaults: same as test files).
-The port of the web server can be changed with `--port` (default: `1717`) and
-the watch mode can be enabled with `--watch`.
+the second the path to the watch files/directory (defaults to test files). The
+port of the web server can be changed with `--port` (default: `1717`) and the
+watch mode can be enabled with `--watch`.
 
 ```
 codeview path/to/test/files --watch --port 8080
