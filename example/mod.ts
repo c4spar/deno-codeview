@@ -1,4 +1,10 @@
-export function foo() {
+export function foo(val?: boolean, val2?: boolean) {
+  if (val) {
+    return "val";
+  }
+  if (val2) {
+    return "val";
+  }
   return "foo";
 }
 export function bar() {
