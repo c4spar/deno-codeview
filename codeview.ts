@@ -26,9 +26,14 @@ const codeview = new Command<void>()
     "Tmp directory for generated coverage files.",
     { default: ".coverage" },
   )
+  .option<{ host: string }>(
+    "-H, --host, --hostname <hostname>",
+    "The hostname for the web-server.",
+    { default: "0.0.0.0" },
+  )
   .option<{ port: number }>(
-    "--port <port:number>",
-    "Web-server port which is started to serve the web-view.",
+    "-p, --port <port:number>",
+    "The port for the web-server.",
     { default: 1717 },
   )
   .option<{ spinner: boolean }>(
@@ -154,20 +159,20 @@ const codeview = new Command<void>()
     testFiles = ".",
     watchFiles: string = testFiles,
   ): Promise<void> => {
-    const host = "http://127.0.0.1";
+    const url = `http://${options.host}:${options.port}`;
+    const spinner: Spinner | null = options.spinner
+      ? wait("Initializing codeview...").start()
+      : null;
     const webview: Webview = new Webview({
-      url: `${host}:${options.port}`,
+      url,
       frameless: false,
       resizable: true,
       title: "Coverage Report",
     });
-    const spinner: Spinner | null = options.spinner
-      ? wait("Initializing codeview...").start()
-      : null;
     const sig = Deno.signals.interrupt();
-    const waitingMessage = "Waiting for file system changes...";
     const controller = new AbortController();
     const processes: Set<Deno.Process | Deno.File> = new Set();
+    const waitingMessage = "Waiting for file system changes...";
     let app: Application | null = null;
 
     try {
@@ -243,7 +248,11 @@ const codeview = new Command<void>()
         app.addEventListener("listen", () => resolve());
         // app.addEventListener("error", (event) => handleError(event.error));
 
-        app.listen({ port: options.port, signal: controller.signal });
+        app.listen({
+          hostname: options.host,
+          port: options.port,
+          signal: controller.signal,
+        });
       });
     }
 
@@ -281,9 +290,8 @@ const codeview = new Command<void>()
     function welcome() {
       log();
       log(
-        blue("  Web server is running at: %s:%s 🚀"),
-        green(host),
-        green(options.port.toString()),
+        blue("  Web server is running at: %s 🚀"),
+        green(url),
       );
       log(
         blue("  Watch mode: %s ⌚"),
@@ -319,6 +327,7 @@ const codeview = new Command<void>()
                 "debounce",
                 "check",
                 "remote",
+                "host",
               ]
                 .includes(name)
             )
