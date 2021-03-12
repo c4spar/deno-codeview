@@ -1,5 +1,43 @@
 import { readLines } from "./deps.ts";
 
+export interface LineCoverage {
+  line: number;
+  hit: number;
+}
+
+export interface FunctionCoverage {
+  name: string;
+  line: number;
+  hit: number;
+}
+
+export interface BranchCoverage {
+  line: number;
+  block: number;
+  branch: number;
+  taken: number;
+}
+
+export interface Source {
+  name?: string;
+  file: string;
+  lines: {
+    found: number;
+    hit: number;
+    coverage: Array<LineCoverage>;
+  };
+  functions: {
+    found: number;
+    hit: number;
+    coverage: Array<FunctionCoverage>;
+  };
+  branches: {
+    found: number;
+    hit: number;
+    coverage: Array<BranchCoverage>;
+  };
+}
+
 export async function parse(path: string) {
   let source: Source = createSource();
   const sources: Array<Source> = [source];
@@ -142,47 +180,3 @@ function createSource(): Source {
     },
   };
 }
-
-interface Source {
-  name?: string;
-  file: string;
-  lines: {
-    found: number;
-    hit: number;
-    coverage: Array<LineCoverage>;
-  };
-  functions: {
-    found: number;
-    hit: number;
-    coverage: Array<FunctionCoverage>;
-  };
-  branches: {
-    found: number;
-    hit: number;
-    coverage: Array<BranchCoverage>;
-  };
-}
-
-interface LineCoverage {
-  line: number;
-  hit: number;
-}
-
-interface FunctionCoverage {
-  name: string;
-  line: number;
-  hit: number;
-}
-
-interface BranchCoverage {
-  line: number;
-  block: number;
-  branch: number;
-  taken: number;
-}
-
-console.log(JSON.stringify(
-  await parse(".coverage/cov.lcov"),
-  null,
-  2,
-));
