@@ -58,8 +58,8 @@ const codeview = new Command<void>()
     "--allow-hrtime",
     "Allow high resolution time measurement",
   )
-  .option<{ allowNet?: string }>(
-    "--allow-net [domains]",
+  .option<{ allowNet?: boolean | string }>(
+    "--allow-net [domains:string]",
     "Allow network access",
   )
   .option<{ allowNone?: boolean }>(
@@ -70,16 +70,16 @@ const codeview = new Command<void>()
     "--allow-plugin",
     "Allow loading plugins",
   )
-  .option<{ allowRead?: string }>(
-    "--allow-read [files]",
+  .option<{ allowRead?: boolean | string }>(
+    "--allow-read [files:string]",
     "Allow file system read access",
   )
   .option<{ allowRun?: boolean }>(
     "--allow-run",
     "Allow running subprocesses",
   )
-  .option<{ allowWrite?: string }>(
-    "--allow-write [files]",
+  .option<{ allowWrite?: boolean | string }>(
+    "--allow-write [files:string]",
     "Allow file system write access",
   )
   .option<{ cachedOnly?: boolean }>(
@@ -87,11 +87,11 @@ const codeview = new Command<void>()
     "Require that remote dependencies are already cached",
   )
   .option<{ cert?: string }>(
-    "--cert <file>",
+    "--cert <file:string>",
     "Load certificate authority from PEM encoded file",
   )
   .option<{ config?: string }>(
-    "-c, --config <file>",
+    "-c, --config <file:string>",
     "Load tsconfig.json configuration file",
   )
   .option<{ failFast?: boolean }>(
@@ -99,19 +99,19 @@ const codeview = new Command<void>()
     "Stop on first error",
   )
   .option<{ filter?: string }>(
-    "--filter <filter>",
+    "--filter <filter:string>",
     "Run tests with this string or pattern in the test name",
   )
   .option<{ importMap?: string }>(
-    "--import-map <file>",
+    "--import-map <file:string>",
     "Load import map file",
   )
   .option<{ location?: string }>(
-    "--location <href>",
+    "--location <href:string>",
     "Value of 'globalThis.location' used by some web APIs",
   )
   .option<{ logLevel?: string }>(
-    "-L, --log-level <log-level>",
+    "-L, --log-level <log-level:string>",
     "Set log level [possible values: debug, info]",
   )
   .option<{ check?: boolean }>(
@@ -126,8 +126,8 @@ const codeview = new Command<void>()
     "-q, --quiet",
     "Suppress diagnostic output",
   )
-  .option<{ reload?: boolean }>(
-    "-r, --reload <cache-blocklist>",
+  .option<{ reload?: boolean | string }>(
+    "-r, --reload [cache-blocklist:string]",
     "Reload source code cache (recompile TypeScript)",
   )
   .option<{ seed?: number }>(
@@ -139,19 +139,19 @@ const codeview = new Command<void>()
     "Enable unstable features and APIs",
   )
   .option<{ v8Flags?: string }>(
-    "--v8-flags <v8-flags>",
+    "--v8-flags <v8-flags:string>",
     "Set V8 command line options (for help: --v8-flags=--help)",
   )
   .option<{ exclude?: string }>(
-    "--exclude <regex>",
+    "--exclude <regex:string>",
     "Exclude source files from the report [default: test\.(js|mjs|ts|jsx|tsx)$]",
   )
   .option<{ ignore?: string }>(
-    "--ignore <ignore>",
+    "--ignore <ignore:string>",
     "Ignore coverage files",
   )
   .option<{ include?: string }>(
-    "--include <regex>",
+    "--include <regex:string>",
     "Include source files in the report [default: ^file:]",
   )
   .action(async (
