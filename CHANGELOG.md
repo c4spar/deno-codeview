@@ -2,9 +2,11 @@
 
 ### Features
 
-* add first version ([c76859f](https://github.com/c4spar/deno-codeview/commit/c76859f))
+- add first version
+  ([c76859f](https://github.com/c4spar/deno-codeview/commit/c76859f))
 
 ### Documentation Updates
 
-* update readme ([b098369](https://github.com/c4spar/deno-codeview/commit/b098369), [fef0d4e](https://github.com/c4spar/deno-codeview/commit/fef0d4e))
-
+- update readme
+  ([b098369](https://github.com/c4spar/deno-codeview/commit/b098369),
+  [fef0d4e](https://github.com/c4spar/deno-codeview/commit/fef0d4e))
