@@ -38,7 +38,7 @@ const codeview = new Command<void>()
   )
   .option<{ spinner: boolean }>(
     "--no-spinner",
-    "Web-server port which is started to serve the web-view.",
+    "Disable spinner and log output directly to stdout.",
   )
   .option<{ debounce: number }>(
     "--debounce",
