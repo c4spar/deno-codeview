@@ -71,47 +71,47 @@ export async function parse(path: string) {
         const [hit, name] = value.split(",");
         const fn = source.functions.coverage.find((fn) => fn.name === name);
         if (fn) {
-          fn.hit = Number(hit);
+          fn.hit = Number(hit) || 0;
         }
         break;
       }
       case LCovType.BranchCoverage: {
         const [line, block, branch, taken] = value.split(",");
         source.branches.coverage.push({
-          line: Number(line),
-          block: Number(block),
-          branch: Number(branch),
-          taken: ((taken === "-") ? 0 : Number(taken)),
+          line: Number(line) || 0,
+          block: Number(block) || 0,
+          branch: Number(branch) || 0,
+          taken: Number(taken) || 0,
         });
         break;
       }
       case LCovType.LineCoverage: {
         const [line, hit] = value.split(",");
         source.lines.coverage.push({
-          line: Number(line),
-          hit: Number(hit),
+          line: Number(line) || 0,
+          hit: Number(hit) || 0,
         });
         break;
       }
 
       case LCovType.FunctionFound:
-        source.functions.found = Number(value);
+        source.functions.found = Number(value) || 0;
         break;
       case LCovType.BranchesFound:
-        source.branches.found = Number(value);
+        source.branches.found = Number(value) || 0;
         break;
       case LCovType.LinesFound:
-        source.lines.found = Number(value);
+        source.lines.found = Number(value) || 0;
         break;
 
       case LCovType.FunctionHit:
-        source.functions.hit = Number(value);
+        source.functions.hit = Number(value) || 0;
         break;
       case LCovType.BranchesHit:
-        source.branches.hit = Number(value);
+        source.branches.hit = Number(value) || 0;
         break;
       case LCovType.LinesHit:
-        source.lines.hit = Number(value);
+        source.lines.hit = Number(value) || 0;
         break;
 
       case LCovType.EndOfRecord:
