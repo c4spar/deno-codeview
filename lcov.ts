@@ -3,6 +3,7 @@ import { readLines } from "./deps.ts";
 export interface LineCoverage {
   line: number;
   hit: number;
+  checksum?: string;
 }
 
 export interface FunctionCoverage {
@@ -86,10 +87,11 @@ export async function parse(path: string) {
         break;
       }
       case LCovType.LineCoverage: {
-        const [line, hit] = value.split(",");
+        const [line, hit, checksum] = value.split(",");
         source.lines.coverage.push({
           line: Number(line) || 0,
           hit: Number(hit) || 0,
+          checksum: checksum,
         });
         break;
       }
@@ -128,6 +130,7 @@ export async function parse(path: string) {
   return sources;
 }
 
+// https://manpages.debian.org/stretch/lcov/geninfo.1.en.html#FILES
 enum LCovType {
   /** TN:<test name> */
   TestName = "TN",
