@@ -46,7 +46,7 @@ const codeview = new Command<void>()
     "Allow all permissions",
   )
   .option<{ allowEnv?: boolean }>(
-    "--allow-env",
+    "-A, --allow-env",
     "Allow environment access",
   )
   .option<{ allowHrtime?: boolean }>(
