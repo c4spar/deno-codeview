@@ -1,10 +1,10 @@
 import {
-  Application,
   blue,
   Command,
   green,
   red,
-  send,
+  serve as serveStd,
+  Server,
   Spinner,
   wait,
   Webview,
@@ -167,19 +167,19 @@ const codeview = new Command<void>()
       url,
       frameless: false,
       resizable: true,
+      debug: options.logLevel === "debug",
       title: "Coverage Report",
     });
     const sig = Deno.signals.interrupt();
-    const controller = new AbortController();
     const processes: Set<Deno.Process | Deno.File> = new Set();
     const waitingMessage = "Waiting for file system changes...";
-    let app: Application | null = null;
+    let server: Server | null = null;
 
     try {
       signals();
       await clean();
-      await generate();
-      await serve();
+      generate();
+      serve().catch(exit);
       webview.run().then(exit).catch(exit);
       options.watch && watch().catch(exit);
       welcome();
@@ -192,7 +192,7 @@ const codeview = new Command<void>()
         sig.dispose();
         spinner?.stop();
         webview.exit();
-        controller.abort();
+        server?.close();
         Deno.exit(0);
       }
     }
@@ -203,7 +203,7 @@ const codeview = new Command<void>()
       sig.dispose();
       spinner?.stop();
       webview.exit();
-      controller.abort();
+      server?.close();
       Deno.exit(0);
     }
 
@@ -226,34 +226,86 @@ const codeview = new Command<void>()
 
       for await (const event of watcher) {
         if (!event.paths.some((path) => path.includes(options.tmp))) {
-          update();
+          await update();
         }
       }
     }
 
-    function serve(): Promise<void> {
-      return new Promise((resolve) => {
-        if (app) {
-          return;
-        }
-        app = new Application();
+    const MEDIA_TYPES: Record<string, string> = {
+      ".css": "text/css",
+      ".gif": "image/gif",
+      ".gz": "application/gzip",
+      ".htm": "text/html",
+      ".html": "text/html",
+      ".jpe": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".jpg": "image/jpeg",
+      ".js": "application/javascript",
+      ".json": "application/json",
+      ".jsx": "text/jsx",
+      ".map": "application/json",
+      ".md": "text/markdown",
+      ".mjs": "application/javascript",
+      ".png": "image/png",
+      ".svg": "image/svg+xml",
+      ".ts": "text/typescript",
+      ".tsx": "text/tsx",
+      ".txt": "text/plain",
+      ".wasm": "application/wasm",
+    };
 
-        app.use(async (ctx) => {
-          await send(ctx, ctx.request.url.pathname, {
-            root: `${options.tmp}/html`,
-            index: "index.html",
-          });
-        });
+    function getContentType(path: string): string | undefined {
+      const parts = path.split(".");
+      parts.shift();
+      const ext = parts[parts.length - 1];
+      return ext && MEDIA_TYPES[ext];
+    }
 
-        app.addEventListener("listen", () => resolve());
-        // app.addEventListener("error", (event) => handleError(event.error));
+    async function serve(): Promise<void> {
+      if (server) {
+        return;
+      }
 
-        app.listen({
-          hostname: options.host,
-          port: options.port,
-          signal: controller.signal,
-        });
+      debug("Starting server at: %s:%s", options.host, options.port);
+      server = serveStd({
+        hostname: options.host,
+        port: options.port,
       });
+
+      for await (const req of server) {
+        const fileName = req.url[req.url.length - 1] === "/"
+          ? req.url + "index.html"
+          : req.url;
+        const path = `${options.tmp}/html${fileName}`;
+        try {
+          const [file, fileInfo] = await Promise.all([
+            Deno.open(path),
+            Deno.stat(path),
+          ]);
+          const headers = new Headers();
+          headers.set("content-length", fileInfo.size.toString());
+          const contentType = getContentType(path);
+          if (contentType) {
+            headers.set("content-type", contentType);
+          }
+          req.done.then(() => file.close());
+          debug("%s %s %s", blue("GET"), green("200"), path);
+          req.respond({
+            status: 200,
+            body: file,
+            headers,
+          });
+        } catch (error) {
+          if (error instanceof Deno.errors.NotFound) {
+            debug("%s %s %s", blue("GET"), red("404"), path);
+            req.respond({ status: 404, body: "Not Found" });
+          } else {
+            debug("%s %s %s", blue("GET"), red("500"), path);
+            logError(error);
+            req.respond({ status: 500, body: "Internal Server Error" });
+          }
+        }
+      }
     }
 
     async function generate() {
@@ -436,6 +488,12 @@ const codeview = new Command<void>()
       spinner?.start();
     }
 
+    function debug(...args: Array<unknown>) {
+      if (options.logLevel === "debug") {
+        log(...args);
+      }
+    }
+
     function logError(...args: Array<unknown>) {
       spinner?.stop();
       console.error(...args);
@@ -445,11 +503,7 @@ const codeview = new Command<void>()
     function handleError(...args: Array<unknown>) {
       closeAllProcesses();
       logError(
-        ...args.map((arg) =>
-          // red(
-          arg instanceof Error && arg.stack || String(arg)
-          // )
-        ),
+        ...args.map((arg) => arg instanceof Error && arg.stack || String(arg)),
       );
     }
 
