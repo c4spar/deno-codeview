@@ -110,7 +110,7 @@ const codeview = new Command<void>()
     "--location <href:string>",
     "Value of 'globalThis.location' used by some web APIs",
   )
-  .option<{ logLevel?: string }>(
+  .option<{ logLevel?: "debug" | "info" }>(
     "-L, --log-level <log-level:string>",
     "Set log level [possible values: debug, info]",
   )
