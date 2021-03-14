@@ -15,7 +15,7 @@ import {
 
 const codeview = new Command<void>()
   .name("codeview")
-  .description("Code coverage webview for Deno.")
+  .description("Deno Coverage Webview Reporter.")
   .arguments<[testFiles?: string, watchFiles?: string]>(
     "[test-files] [watch-files]",
   )
@@ -175,25 +175,36 @@ const codeview = new Command<void>()
     const waitingMessage = "Waiting for file system changes...";
     let webview: Webview | null = null;
     let server: Server | null = null;
+    let cleanConfirmed = false;
+    let hasExitCalled = false;
 
-    signals().catch(exit);
-    await clean(true).catch(exit);
+    await clean(true).catch((error) => exit(error, false));
+
+    Promise.any([
+      sig,
+      serve(),
+      options.watch ? watch() : new Promise(() => {},
+    ]).then(exit).catch(exit);
+
+    welcome();
+
     await generate().finally(() => {
-      serve().catch(exit);
       runWebview().then(exit).catch(exit);
-      options.watch && watch().catch(exit);
-      welcome();
+      logSpinner(waitingMessage);
     });
 
-    async function signals() {
-      for await (const _ of sig) {
-        await exit();
+    async function exit(error?: unknown, doClean = true): Promise<void> {
+      if (hasExitCalled) {
+        return;
       }
-    }
-
-    async function exit(error?: unknown): Promise<void> {
-      !options.keep && await clean(false);
-      error && handleError(error);
+      hasExitCalled = true;
+      debug("exit called");
+      if (error) {
+        logError(error);
+      }
+      if (doClean && cleanConfirmed && !options.keep) {
+        await clean(false).catch((error) => exit(error, false));
+      }
       closeAllProcesses();
       sig.dispose();
       spinner?.stop();
@@ -321,7 +332,7 @@ const codeview = new Command<void>()
         await coverage();
         await html();
       } catch (error) {
-        handleError(error);
+        logError(error);
       } finally {
         closeAllProcesses();
       }
@@ -356,13 +367,13 @@ const codeview = new Command<void>()
         options.watch ? green("enabled") : red("disabled"),
       );
       log();
-      logSpinner(waitingMessage);
     }
 
     async function clean(confirm: boolean): Promise<void> {
       if (
         !await Deno.lstat(options.tmp).then(() => true).catch(() => false)
       ) {
+        cleanConfirmed = true;
         return;
       }
 
@@ -387,13 +398,18 @@ const codeview = new Command<void>()
         if (abort) {
           Deno.exit(0);
         }
+        cleanConfirmed = true;
       }
 
-      spinner?.start();
-      logSpinner("Deleting tmp directory...");
-      await run({
-        cmd: ["rm", "-rf", options.tmp],
-      });
+      if (cleanConfirmed) {
+        debug("Deleting tmp directory on exit...");
+        logSpinner("Deleting tmp directory...");
+        await run({
+          cmd: ["rm", "-rf", options.tmp],
+        });
+      } else {
+        debug("Prevent deleting tmp directory!");
+      }
     }
 
     async function test() {
@@ -479,6 +495,7 @@ const codeview = new Command<void>()
     };
 
     async function run(opts: RunOptions) {
+      debug(blue("$ %s"), opts.cmd.join(" "));
       const process = Deno.run({
         stdout: "piped",
         stderr: "piped",
@@ -537,19 +554,12 @@ const codeview = new Command<void>()
       spinner?.start();
     }
 
-    function handleError(...args: Array<unknown>) {
-      closeAllProcesses();
-      logError(
-        ...args.map((arg) => arg instanceof Error && arg.stack || String(arg)),
-      );
-    }
-
     // deno-lint-ignore no-explicit-any
     function debounce<T extends (...args: Array<any>) => void | Promise<void>>(
       func: T,
       wait: number,
     ): T {
-      var timeout: number | null;
+      let timeout: number | null;
       return ((...args: Array<unknown>) => {
         if (timeout !== null) {
           clearTimeout(timeout);
