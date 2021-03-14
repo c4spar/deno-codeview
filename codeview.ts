@@ -1,13 +1,16 @@
 import {
   blue,
+  bold,
   Command,
   green,
   red,
   serve as serveStd,
   Server,
   Spinner,
+  Toggle,
   wait,
   Webview,
+  yellow,
 } from "./deps.ts";
 
 const codeview = new Command<void>()
@@ -25,6 +28,10 @@ const codeview = new Command<void>()
     "--tmp",
     "Tmp directory for generated coverage files.",
     { default: ".coverage" },
+  )
+  .option<{ keep?: boolean }>(
+    "-k, --keep",
+    "Keep tmp directory on exit.",
   )
   .option<{ host: string }>(
     "-H, --host, --hostname <hostname>",
@@ -170,7 +177,7 @@ const codeview = new Command<void>()
     let server: Server | null = null;
 
     signals().catch(exit);
-    await clean().catch(exit);
+    await clean(true).catch(exit);
     await generate().finally(() => {
       serve().catch(exit);
       runWebview().then(exit).catch(exit);
@@ -180,11 +187,12 @@ const codeview = new Command<void>()
 
     async function signals() {
       for await (const _ of sig) {
-        exit();
+        await exit();
       }
     }
 
-    function exit(error?: unknown) {
+    async function exit(error?: unknown): Promise<void> {
+      !options.keep && await clean(false);
       error && handleError(error);
       closeAllProcesses();
       sig.dispose();
@@ -351,10 +359,40 @@ const codeview = new Command<void>()
       logSpinner(waitingMessage);
     }
 
-    async function clean() {
-      logSpinner("Cleaning tmp directory...");
+    async function clean(confirm: boolean): Promise<void> {
+      if (
+        !await Deno.lstat(options.tmp).then(() => true).catch(() => false)
+      ) {
+        return;
+      }
+
+      if (confirm) {
+        log(
+          "%s tmp directory %s already exists!",
+          yellow(`[Warning]`),
+          bold(options.tmp),
+        );
+        log(
+          "%s Existing files in this directory will be deleted!",
+          yellow(`[Warning]`),
+        );
+        spinner?.stop();
+
+        const abort = !await Toggle.prompt({
+          message: "Continue and delete existing tmp directory?",
+          default: false,
+          indent: "",
+        });
+
+        if (abort) {
+          Deno.exit(0);
+        }
+      }
+
+      spinner?.start();
+      logSpinner("Deleting tmp directory...");
       await run({
-        cmd: ["rm", "-r", "-f", options.tmp],
+        cmd: ["rm", "-rf", options.tmp],
       });
     }
 
@@ -378,6 +416,7 @@ const codeview = new Command<void>()
                 "check",
                 "remote",
                 "host",
+                "keep",
               ]
                 .includes(name)
             )
