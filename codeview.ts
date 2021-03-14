@@ -12,6 +12,7 @@ import {
   Webview,
   yellow,
 } from "./deps.ts";
+import { loadingTemplate } from "./loader.ts";
 
 const codeview = new Command<void>()
   .name("codeview")
@@ -166,9 +167,10 @@ const codeview = new Command<void>()
     testFiles = ".",
     watchFiles: string = testFiles,
   ): Promise<void> => {
+    let infoMessage: string = "Initializing codeview....";
     const url = `http://${options.host}:${options.port}`;
     const spinner: Spinner | null = options.spinner
-      ? wait("Initializing codeview...").start()
+      ? wait(infoMessage).start()
       : null;
     const sig = Deno.signals.interrupt();
     const processes: Set<Deno.Process | Deno.File> = new Set();
@@ -180,17 +182,26 @@ const codeview = new Command<void>()
 
     await clean(true).catch((error) => exit(error, false));
 
+    const loadingMessageInterval = setInterval(
+      () => {
+        webview?.eval(`window.updateLoadingMessage("${infoMessage}")`);
+      },
+      100,
+    );
+
     Promise.any([
       sig,
       serve(),
-      options.watch ? watch() : new Promise(() => {},
+      runWebview(),
+      options.watch ? watch() : Promise.resolve(),
     ]).then(exit).catch(exit);
 
     welcome();
 
     await generate().finally(() => {
-      runWebview().then(exit).catch(exit);
-      logSpinner(waitingMessage);
+      clearInterval(loadingMessageInterval);
+      logInfo(waitingMessage);
+      webview?.eval(`window.location.href = "${url}"`);
     });
 
     async function exit(error?: unknown, doClean = true): Promise<void> {
@@ -206,6 +217,7 @@ const codeview = new Command<void>()
         await clean(false).catch((error) => exit(error, false));
       }
       closeAllProcesses();
+      clearInterval(loadingMessageInterval);
       sig.dispose();
       spinner?.stop();
       webview?.exit();
@@ -227,7 +239,7 @@ const codeview = new Command<void>()
       const update = debounce(async () => {
         await generate();
         webview?.eval("window.location.reload()");
-        logSpinner(waitingMessage);
+        logInfo(waitingMessage);
       }, options.debounce);
 
       for await (const event of watcher) {
@@ -316,7 +328,11 @@ const codeview = new Command<void>()
 
     async function runWebview() {
       webview = new Webview({
-        url,
+        url: `data:text/html,${
+          encodeURIComponent(
+            loadingTemplate.replace("{{subtitle}}", infoMessage),
+          )
+        }`,
         frameless: false,
         resizable: true,
         debug: options.logLevel === "debug",
@@ -402,8 +418,7 @@ const codeview = new Command<void>()
       }
 
       if (cleanConfirmed) {
-        debug("Deleting tmp directory on exit...");
-        logSpinner("Deleting tmp directory...");
+        logInfo("Deleting tmp directory...");
         await run({
           cmd: ["rm", "-rf", options.tmp],
         });
@@ -413,7 +428,7 @@ const codeview = new Command<void>()
     }
 
     async function test() {
-      logSpinner("Running tests...");
+      logInfo("Running tests...");
       await run({
         cmd: [
           "deno",
@@ -433,6 +448,7 @@ const codeview = new Command<void>()
                 "remote",
                 "host",
                 "keep",
+                "maximize",
               ]
                 .includes(name)
             )
@@ -446,11 +462,10 @@ const codeview = new Command<void>()
           ...(testFiles ? [testFiles] : []),
         ],
       });
-      logSpinner("Running tests done...");
     }
 
     async function coverage() {
-      logSpinner("Generating coverage report...");
+      logInfo("Generating lcov coverage report...");
       await run({
         cmd: [
           "deno",
@@ -463,7 +478,7 @@ const codeview = new Command<void>()
         ],
         process: async (process) => {
           if (process.stdout) {
-            logSpinner("Reading cov.lcov...");
+            debug("Reading cov.lcov...");
             const lcov: Deno.File = await Deno.open(
               `${options.tmp}/cov.lcov`,
               {
@@ -479,7 +494,7 @@ const codeview = new Command<void>()
     }
 
     async function html() {
-      logSpinner("Generating html report...");
+      logInfo("Generating html report...");
       await run({
         cmd: [
           "genhtml",
@@ -490,15 +505,18 @@ const codeview = new Command<void>()
       });
     }
 
-    type RunOptions = Deno.RunOptions & {
+    type RunOptions = {
       process?: (process: Deno.Process) => Promise<void>;
+      cmd: Array<string>;
     };
 
     async function run(opts: RunOptions) {
       debug(blue("$ %s"), opts.cmd.join(" "));
       const process = Deno.run({
-        stdout: "piped",
-        stderr: "piped",
+        stdout: !opts.process && options.logLevel === "debug"
+          ? "inherit"
+          : "piped",
+        stderr: options.logLevel === "debug" ? "inherit" : "piped",
         cmd: opts.cmd,
       });
 
@@ -510,6 +528,7 @@ const codeview = new Command<void>()
       ]);
 
       if (!status.success) {
+        debug(yellow("Failed: %s"), opts.cmd.join(" "), status);
         if (status.signal) {
           // don't throw an error on signal!
           return;
@@ -526,14 +545,17 @@ const codeview = new Command<void>()
 
         throw new Error(output || "Unknown error");
       }
+      debug(green("Done: %s"), opts.cmd.join(" "));
     }
 
-    function logSpinner(message: string) {
+    function logInfo(message: string) {
+      infoMessage = message;
       if (spinner && options.spinner) {
         spinner.text = message;
       } else {
         log(message);
       }
+      webview?.eval(`window.updateLoadingMessage("${message}")`);
     }
 
     function log(...args: Array<unknown>) {
