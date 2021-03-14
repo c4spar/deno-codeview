@@ -53,6 +53,10 @@ const codeview = new Command<void>()
     "Delays the file change event in watch mode.",
     { default: 200 },
   )
+  .option<{ maximize?: boolean }>(
+    "-M, --maximize",
+    "Start web-view with a maximized window.",
+  )
   // Deno options
   .option<{ allowAll?: boolean }>(
     "-A, --allow-all",
@@ -338,7 +342,9 @@ const codeview = new Command<void>()
         debug: options.logLevel === "debug",
         title: "Coverage Report",
       });
-      return webview.run();
+      const promise = webview.run();
+      setTimeout(() => webview?.setMaximized(!!options.maximize), 200);
+      return promise;
     }
 
     async function generate() {
