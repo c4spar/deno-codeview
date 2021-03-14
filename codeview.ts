@@ -163,37 +163,24 @@ const codeview = new Command<void>()
     const spinner: Spinner | null = options.spinner
       ? wait("Initializing codeview...").start()
       : null;
-    const webview: Webview = new Webview({
-      url,
-      frameless: false,
-      resizable: true,
-      debug: options.logLevel === "debug",
-      title: "Coverage Report",
-    });
     const sig = Deno.signals.interrupt();
     const processes: Set<Deno.Process | Deno.File> = new Set();
     const waitingMessage = "Waiting for file system changes...";
+    let webview: Webview | null = null;
     let server: Server | null = null;
 
-    try {
-      signals();
-      await clean();
-      generate();
+    signals().catch(exit);
+    await clean().catch(exit);
+    await generate().finally(() => {
       serve().catch(exit);
-      webview.run().then(exit).catch(exit);
+      runWebview().then(exit).catch(exit);
       options.watch && watch().catch(exit);
       welcome();
-    } catch (error) {
-      exit(error);
-    }
+    });
 
     async function signals() {
       for await (const _ of sig) {
-        sig.dispose();
-        spinner?.stop();
-        webview.exit();
-        server?.close();
-        Deno.exit(0);
+        exit();
       }
     }
 
@@ -202,7 +189,7 @@ const codeview = new Command<void>()
       closeAllProcesses();
       sig.dispose();
       spinner?.stop();
-      webview.exit();
+      webview?.exit();
       server?.close();
       Deno.exit(0);
     }
@@ -220,7 +207,7 @@ const codeview = new Command<void>()
 
       const update = debounce(async () => {
         await generate();
-        webview.eval("window.location.reload()");
+        webview?.eval("window.location.reload()");
         logSpinner(waitingMessage);
       }, options.debounce);
 
@@ -306,6 +293,17 @@ const codeview = new Command<void>()
           }
         }
       }
+    }
+
+    async function runWebview() {
+      webview = new Webview({
+        url,
+        frameless: false,
+        resizable: true,
+        debug: options.logLevel === "debug",
+        title: "Coverage Report",
+      });
+      return webview.run();
     }
 
     async function generate() {
