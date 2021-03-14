@@ -49,7 +49,7 @@ const codeview = new Command<void>()
     "Disable spinner and log output directly to stdout.",
   )
   .option<{ debounce: number }>(
-    "-d, --debounce",
+    "-d, --debounce <debounce:number>",
     "Delays the file change event in watch mode.",
     { default: 200 },
   )
