@@ -12,7 +12,6 @@ export type {
   Server,
   ServerRequest,
 } from "https://deno.land/std@0.90.0/http/server.ts";
-export { readLines } from "https://deno.land/std@0.90.0/io/bufio.ts";
 
 /* 3rd party */
 export { Spinner, wait } from "https://deno.land/x/wait@0.1.10/mod.ts";
