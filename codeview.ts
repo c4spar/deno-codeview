@@ -171,7 +171,7 @@ const codeview = new Command<void>()
     testFiles = ".",
     watchFiles: string = testFiles,
   ): Promise<void> => {
-    let infoMessage: string = "Initializing codeview....";
+    let infoMessage = "Initializing codeview....";
     const url = `http://${options.host}:${options.port}`;
     const spinner: Spinner | null = options.spinner
       ? wait(infoMessage).start()
@@ -184,7 +184,7 @@ const codeview = new Command<void>()
     let cleanConfirmed = false;
     let hasExitCalled = false;
 
-    await clean(true).catch((error) => exit(error, false));
+    await clean(options.tmp, true).catch((error) => exit(error, false));
 
     const loadingMessageInterval = setInterval(
       () => {
@@ -218,7 +218,7 @@ const codeview = new Command<void>()
         logError(error);
       }
       if (doClean && cleanConfirmed && !options.keep) {
-        await clean(false).catch((error) => exit(error, false));
+        await clean(options.tmp, false).catch((error) => exit(error, false));
       }
       closeAllProcesses();
       clearInterval(loadingMessageInterval);
@@ -330,7 +330,7 @@ const codeview = new Command<void>()
       }
     }
 
-    async function runWebview() {
+    function runWebview(): Promise<void> {
       webview = new Webview({
         url: `data:text/html,${
           encodeURIComponent(
@@ -350,6 +350,8 @@ const codeview = new Command<void>()
     async function generate() {
       closeAllProcesses();
       try {
+        // remove old coverage data or old data will be shown after re-build
+        await clean(`${options.tmp}/cov`, false);
         await test();
         await coverage();
         await html();
@@ -391,9 +393,9 @@ const codeview = new Command<void>()
       log();
     }
 
-    async function clean(confirm: boolean): Promise<void> {
+    async function clean(path: string, confirm: boolean): Promise<void> {
       if (
-        !await Deno.lstat(options.tmp).then(() => true).catch(() => false)
+        !await Deno.lstat(path).then(() => true).catch(() => false)
       ) {
         cleanConfirmed = true;
         return;
@@ -403,7 +405,7 @@ const codeview = new Command<void>()
         log(
           "%s tmp directory %s already exists!",
           yellow(`[Warning]`),
-          bold(options.tmp),
+          bold(path),
         );
         log(
           "%s Existing files in this directory will be deleted!",
@@ -426,7 +428,7 @@ const codeview = new Command<void>()
       if (cleanConfirmed) {
         logInfo("Deleting tmp directory...");
         await run({
-          cmd: ["rm", "-rf", options.tmp],
+          cmd: ["rm", "-rf", path],
         });
       } else {
         debug("Prevent deleting tmp directory!");
