@@ -1,3 +1,15 @@
+# [v0.2.1](https://github.com/c4spar/deno-cli/compare/0.2.0...0.2.1) (2021-03-15)
+
+### Bug Fixes
+
+- **cli:** old coverage data are shown after re-build
+  ([5cdec5b](https://github.com/c4spar/deno-cli/commit/5cdec5b))
+
+### Chore
+
+- **upgrade:** cliffy@v0.18.1
+  ([0f19402](https://github.com/c4spar/deno-cli/commit/0f19402))
+
 # [v0.2.0](https://github.com/c4spar/deno-cli/compare/0.1.0...0.2.0) (2021-03-15)
 
 ### Features
