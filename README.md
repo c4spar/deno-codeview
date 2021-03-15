@@ -58,7 +58,7 @@ sudo apt install lcov
 ## Installation
 
 ```
-deno install --allow-all --unstable https://deno.land/x/codeview@0.2.0/codeview.ts
+deno install --allow-all --unstable https://deno.land/x/codeview@0.2.1/codeview.ts
 ```
 
 ## Usage
