@@ -16,5 +16,5 @@ export type {
 /* 3rd party */
 export { Spinner, wait } from "https://deno.land/x/wait@0.1.10/mod.ts";
 export { Webview } from "https://deno.land/x/webview@0.5.6/mod.ts";
-export { Command } from "https://deno.land/x/cliffy@v0.18.0/command/command.ts";
-export { Toggle } from "https://deno.land/x/cliffy@v0.18.0/prompt/toggle.ts";
+export { Command } from "https://deno.land/x/cliffy@v0.18.1/command/command.ts";
+export { Toggle } from "https://deno.land/x/cliffy@v0.18.1/prompt/toggle.ts";
