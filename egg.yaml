@@ -1,0 +1,18 @@
+name: codeview
+description: Deno Coverage Webview Reporter 🦕
+unstable: true
+version: 0.1.0
+repository: https://github.com/c4spar/deno-codeview/
+homepage: https://github.com/c4spar/deno-codeview/
+entry: codeview.ts
+files:
+  - example/**/*
+  - CHANGELOG.md
+  - codeview.gif
+  - codeview.ts
+  - deps.ts
+  - LICENSE
+  - README.md
+ignore:
+  - .DS_Store
+  - .DS_Store?
