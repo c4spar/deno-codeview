@@ -1,4 +1,4 @@
-export { readLines } from "https://deno.land/std@0.90.0/io/bufio.ts";
+import { readLines } from "https://deno.land/std@0.90.0/io/bufio.ts";
 
 export interface LineCoverage {
   line: number;
@@ -39,7 +39,7 @@ export interface Source {
   };
 }
 
-export async function parse(path: string) {
+export async function parse(path: string): Promise<Array<Source>> {
   let source: Source = createSource();
   const sources: Array<Source> = [source];
   const file = await Deno.open(path, { read: true });
@@ -117,8 +117,8 @@ export async function parse(path: string) {
         break;
 
       case LCovType.EndOfRecord:
-        source = createSource();
         sources.push(source);
+        source = createSource();
         break;
     }
   }
