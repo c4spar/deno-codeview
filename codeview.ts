@@ -217,19 +217,30 @@ const codeview = new Command<void>()
       serve(),
       runWebview(),
       options.watch ? watch() : new Promise(() => {}),
-    ]).then(exit).catch(exit);
+    ]).then(() => exit()).catch(exit);
 
     welcome();
 
-    await generate().finally(() => {
-      clearInterval(loadingMessageInterval);
-      options.watch
-        ? logInfo(waitingMessage)
-        : logInfo("Successfully generated coverage report");
-      webview?.eval(`window.location.href = "${url}"`);
-    });
+    await generate()
+      .then(() => {
+        clearInterval(loadingMessageInterval);
+        let message = "Successfully generated coverage report!";
+        if (options.watch) {
+          message += " " + waitingMessage;
+        }
+        logInfo(message);
+        webview?.eval(`window.location.href = "${url}"`);
+      })
+      .catch((error) => {
+        if (!options.watch) {
+          exit(error);
+          return;
+        }
+        logError(error);
+        logInfo(`Failed to generated coverage report! ${waitingMessage}`);
+      });
 
-    async function exit(error?: unknown, doClean = true): Promise<void> {
+    async function exit(error?: Error, doClean = true): Promise<void> {
       if (hasExitCalled) {
         return;
       }
@@ -280,7 +291,11 @@ const codeview = new Command<void>()
             options.excludeWatch?.some((exclude) => path.startsWith(exclude))
           ) && event.paths[0][event.paths[0].length - 1] !== "~"
         ) {
-          await update(event.paths[0]);
+          try {
+            await update(event.paths[0]);
+          } catch (error) {
+            logError(error);
+          }
         }
       }
     }
@@ -387,8 +402,6 @@ const codeview = new Command<void>()
         await test();
         await coverage();
         await html();
-      } catch (error) {
-        logError(error);
       } finally {
         closeAllProcesses();
       }
