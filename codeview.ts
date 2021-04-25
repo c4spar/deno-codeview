@@ -4,6 +4,8 @@ import {
   Command,
   green,
   red,
+  relative,
+  resolve,
   serve as serveStd,
   Server,
   Spinner,
@@ -24,12 +26,20 @@ const codeview = new Command<void>()
   // Codeview options
   .option<{ watch?: boolean }>(
     "-w, --watch",
-    "Enable watch mode",
+    "Enable watch mode.",
+  )
+  .option<{ excludeWatch?: Array<string> }>(
+    "-W, --exclude-watch <files:string[]>",
+    "Exclude files from watch.",
+    { value: (files: Array<string>) => files.map((file) => resolve(file)) },
   )
   .option<{ tmp: string }>(
     "--tmp",
     "Tmp directory for generated coverage files.",
-    { default: ".coverage" },
+    {
+      default: resolve(".coverage"),
+      value: (tmp) => resolve(tmp),
+    },
   )
   .option<{ keep?: boolean }>(
     "-k, --keep",
@@ -121,7 +131,11 @@ const codeview = new Command<void>()
   )
   .option<{ location?: string }>(
     "--location <href:string>",
-    "Value of 'globalThis.location' used by some web APIs",
+    "Value of 'globalThis.location' used by some web APIs.",
+  )
+  .option<{ lock?: string }>(
+    "--lock <file>",
+    "Check the specified lock file.",
   )
   .option<{ logLevel?: "debug" | "info" }>(
     "-L, --log-level <log-level:string>",
@@ -245,15 +259,26 @@ const codeview = new Command<void>()
         },
       );
 
-      const update = debounce(async () => {
+      const update = debounce(async (changedFile?: string) => {
+        changedFile && log(
+          "%s %s %s",
+          blue(`[Info]`),
+          bold(relative(Deno.cwd(), changedFile)),
+          blue("changed. Restarting..."),
+        );
         await generate();
         webview?.eval("window.location.reload()");
         logInfo(waitingMessage);
       }, options.debounce);
 
       for await (const event of watcher) {
-        if (!event.paths.some((path) => path.includes(options.tmp))) {
-          await update();
+        if (
+          !event.paths.some((path) =>
+            path.startsWith(options.tmp) ||
+            options.excludeWatch?.some((exclude) => path.startsWith(exclude))
+          ) && event.paths[0][event.paths[0].length - 1] !== "~"
+        ) {
+          await update(event.paths[0]);
         }
       }
     }
