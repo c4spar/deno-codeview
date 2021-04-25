@@ -1,4 +1,4 @@
-import { readLines } from "https://deno.land/std@0.90.0/io/bufio.ts";
+import { readLines } from "https://deno.land/std@0.95.0/io/bufio.ts";
 
 export interface LineCoverage {
   line: number;
