@@ -15,6 +15,7 @@ import {
 import { loadingTemplate } from "./loader.ts";
 
 const codeview = new Command<void>()
+  .version("0.2.1")
   .name("codeview")
   .description("Deno Coverage Webview Reporter.")
   .arguments<[testFiles?: string, watchFiles?: string]>(
