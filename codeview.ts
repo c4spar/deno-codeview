@@ -411,14 +411,14 @@ const codeview = new Command<void>()
       processes.forEach((process) => {
         try {
           process.close();
-        } catch (error) {
+        } catch (_) {
           // ignore error
         }
         try {
           if (process instanceof Deno.Process) {
             process.kill(Deno.Signal.SIGKILL);
           }
-        } catch (error) {
+        } catch (_) {
           // ignore error
         }
       });
