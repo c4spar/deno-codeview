@@ -513,6 +513,8 @@ const codeview = new Command<void>()
           "--lcov",
           ...(options.quiet ? ["--quiet"] : []),
           ...(options.logLevel ? [`--log-level=${options.logLevel}`] : []),
+          ...(options.exclude ? [`--exclude=${options.exclude}`] : []),
+          ...(options.include ? [`--include=${options.include}`] : []),
         ],
         process: async (process) => {
           if (process.stdout) {
