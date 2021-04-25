@@ -563,9 +563,8 @@ const codeview = new Command<void>()
       });
     }
 
-    type RunOptions = {
+    type RunOptions = Deno.RunOptions & {
       process?: (process: Deno.Process) => Promise<void>;
-      cmd: Array<string>;
     };
 
     async function run(opts: RunOptions) {
@@ -574,13 +573,16 @@ const codeview = new Command<void>()
         stdout: !opts.process && options.logLevel === "debug"
           ? "inherit"
           : "piped",
-        stderr: options.logLevel === "debug" ? "inherit" : "piped",
-        cmd: opts.cmd,
+        stderr: options.logLevel ? "inherit" : "piped",
+        ...opts,
       });
 
       processes.add(process);
 
-      const [status] = await Promise.all([
+      const [stdOutput, status] = await Promise.all([
+        (!opts.process && options.logLevel === "debug"
+          ? Promise.resolve()
+          : process.output()) as Promise<Uint8Array | void>,
         process.status(),
         opts.process?.(process),
       ]);
@@ -591,17 +593,15 @@ const codeview = new Command<void>()
           // don't throw an error on signal!
           return;
         }
+        let output = stdOutput ? new TextDecoder().decode(stdOutput) : "";
 
-        let output: string = new TextDecoder().decode(await process.output());
-        const errorMsg: string = new TextDecoder().decode(
-          await process.stderrOutput(),
-        );
-
-        if (errorMsg.trim()) {
-          output += "\n\n" + errorMsg;
+        if (!options.logLevel) {
+          output += "\n\n" + new TextDecoder().decode(
+            await process.stderrOutput(),
+          );
         }
 
-        throw new Error(output || "Unknown error");
+        throw new Error(output || "Command failed.");
       }
       debug(green("Done: %s"), opts.cmd.join(" "));
     }
@@ -623,7 +623,7 @@ const codeview = new Command<void>()
     }
 
     function debug(...args: Array<unknown>) {
-      if (options.logLevel === "debug") {
+      if (options.logLevel) {
         log(...args);
       }
     }
