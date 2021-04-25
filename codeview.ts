@@ -467,36 +467,54 @@ const codeview = new Command<void>()
 
     async function test() {
       logInfo("Running tests...");
+
+      const testOptions: Array<keyof typeof options> = [
+        "allowAll",
+        "allowEnv",
+        "allowHrtime",
+        "allowNet",
+        "allowNone",
+        "allowPlugin",
+        "allowRead",
+        "allowRun",
+        "allowWrite",
+        "cachedOnly",
+        "cert",
+        "config",
+        "failFast",
+        "filter",
+        "importMap",
+        "location",
+        "lock",
+        "logLevel",
+        "quiet",
+        "reload",
+        "v8Flags",
+      ];
+
+      const negatableOptions: Array<keyof typeof options> = [
+        "check",
+        "remote",
+      ];
+
       await run({
         cmd: [
           "deno",
           "test",
           `--coverage=${options.tmp}/cov`,
           "--unstable",
-          ...Object.entries(options)
-            .filter(([name]) =>
-              ![
-                "unstable",
-                "watch",
-                "tmp",
-                "port",
-                "spinner",
-                "debounce",
-                "check",
-                "remote",
-                "host",
-                "keep",
-                "maximize",
-              ]
-                .includes(name)
+          ...testOptions
+            .filter((name: keyof typeof options) =>
+              typeof options[name] !== "undefined"
             )
-            .map(([name, value]) =>
-              value && value !== true
-                ? `--${paramCase(name)}=${String(value)}`
-                : `--${paramCase(name)}`
+            .map((name: keyof typeof options) =>
+              options[name] === true
+                ? `--${paramCase(name)}`
+                : `--${paramCase(name)}=${String(options[name])}`
             ),
-          ...(options.check === false ? ["--no-check"] : []),
-          ...(options.remote === false ? ["--no-remote"] : []),
+          ...negatableOptions
+            .filter((name: keyof typeof options) => options[name] === false)
+            .map((name: keyof typeof options) => `--no-${name}`),
           ...(testFiles ? [testFiles] : []),
         ],
       });
