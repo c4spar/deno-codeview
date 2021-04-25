@@ -191,13 +191,13 @@ const codeview = new Command<void>()
     }
 
     let infoMessage = "Initializing codeview....";
+    const waitingMessage = "Waiting for file system changes...";
     const url = `http://${options.host}:${options.port}`;
     const spinner: Spinner | null = options.spinner
       ? wait(infoMessage).start()
       : null;
     const sig = Deno.signals.interrupt();
     const processes: Set<Deno.Process | Deno.File> = new Set();
-    const waitingMessage = "Waiting for file system changes...";
     let webview: Webview | null = null;
     let server: Server | null = null;
     let cleanConfirmed = false;
@@ -223,7 +223,9 @@ const codeview = new Command<void>()
 
     await generate().finally(() => {
       clearInterval(loadingMessageInterval);
-      logInfo(waitingMessage);
+      options.watch
+        ? logInfo(waitingMessage)
+        : logInfo("Successfully generated coverage report");
       webview?.eval(`window.location.href = "${url}"`);
     });
 
