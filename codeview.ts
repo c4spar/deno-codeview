@@ -172,6 +172,10 @@ const codeview = new Command<void>()
     testFiles = ".",
     watchFiles: string = testFiles,
   ): Promise<void> => {
+    if (options.logLevel) {
+      options.spinner = false;
+    }
+
     let infoMessage = "Initializing codeview....";
     const url = `http://${options.host}:${options.port}`;
     const spinner: Spinner | null = options.spinner
