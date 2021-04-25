@@ -594,12 +594,12 @@ const codeview = new Command<void>()
 
       processes.add(process);
 
-      const [stdOutput, status] = await Promise.all([
+      await opts.process?.(process);
+      const [status, stdOutput] = await Promise.all([
+        process.status(),
         (!opts.process && options.logLevel === "debug"
           ? Promise.resolve()
           : process.output()) as Promise<Uint8Array | void>,
-        process.status(),
-        opts.process?.(process),
       ]);
 
       if (!status.success) {
