@@ -81,39 +81,39 @@ const codeview = new Command<void>()
   )
   .option<{ allowPlugin?: boolean }>(
     "--allow-plugin",
-    "Allow loading plugins",
+    "Allow loading plugins.",
   )
   .option<{ allowRead?: boolean | string }>(
     "--allow-read [files:string]",
-    "Allow file system read access",
+    "Allow file system read access.",
   )
   .option<{ allowRun?: boolean }>(
     "--allow-run",
-    "Allow running subprocesses",
+    "Allow running subprocesses.",
   )
   .option<{ allowWrite?: boolean | string }>(
     "--allow-write [files:string]",
-    "Allow file system write access",
+    "Allow file system write access.",
   )
   .option<{ cachedOnly?: boolean }>(
     "--cached-only",
-    "Require that remote dependencies are already cached",
+    "Require that remote dependencies are already cached.",
   )
   .option<{ cert?: string }>(
     "--cert <file:string>",
-    "Load certificate authority from PEM encoded file",
+    "Load certificate authority from PEM encoded file.",
   )
   .option<{ config?: string }>(
     "-c, --config <file:string>",
-    "Load tsconfig.json configuration file",
+    "Load tsconfig.json configuration file.",
   )
   .option<{ failFast?: boolean }>(
     "--fail-fast",
-    "Stop on first error",
+    "Stop on first error.",
   )
   .option<{ filter?: string }>(
     "--filter <filter:string>",
-    "Run tests with this string or pattern in the test name",
+    "Run tests with this string or pattern in the test name.",
   )
   .option<{ importMap?: string }>(
     "--import-map <file:string>",
@@ -129,31 +129,31 @@ const codeview = new Command<void>()
   )
   .option<{ check?: boolean }>(
     "--no-check",
-    "Skip type checking modules",
+    "Skip type checking modules.",
   )
   .option<{ remote?: boolean }>(
     "--no-remote",
-    "Do not resolve remote modules",
+    "Do not resolve remote modules.",
   )
   .option<{ quiet?: boolean }>(
     "-q, --quiet",
-    "Suppress diagnostic output",
+    "Suppress diagnostic output.",
   )
   .option<{ reload?: boolean | string }>(
     "-r, --reload [cache-blocklist:string]",
-    "Reload source code cache (recompile TypeScript)",
+    "Reload source code cache (recompile TypeScript).",
   )
   .option<{ seed?: number }>(
     "--seed <number:number>",
-    "Seed Math.random()",
+    "Seed Math.random().",
   )
   .option<{ unstable?: boolean }>(
     "--unstable",
-    "Enable unstable features and APIs",
+    "Enable unstable features and APIs.",
   )
   .option<{ v8Flags?: string }>(
     "--v8-flags <v8-flags:string>",
-    "Set V8 command line options (for help: --v8-flags=--help)",
+    "Set V8 command line options (for help: --v8-flags=--help).",
   )
   .option<{ exclude?: string }>(
     "--exclude <regex:string>",
@@ -161,7 +161,7 @@ const codeview = new Command<void>()
   )
   .option<{ ignore?: string }>(
     "--ignore <ignore:string>",
-    "Ignore coverage files",
+    "Ignore coverage files.",
   )
   .option<{ include?: string }>(
     "--include <regex:string>",
