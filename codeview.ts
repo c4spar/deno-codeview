@@ -216,7 +216,7 @@ const codeview = new Command<void>()
       sig,
       serve(),
       runWebview(),
-      options.watch ? watch() : Promise.resolve(),
+      options.watch ? watch() : new Promise(() => {}),
     ]).then(exit).catch(exit);
 
     welcome();
