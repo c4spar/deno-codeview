@@ -186,7 +186,7 @@ const codeview = new Command<void>()
     testFiles = ".",
     watchFiles: string = testFiles,
   ): Promise<void> => {
-    if (options.logLevel) {
+    if (options.logLevel === "debug") {
       options.spinner = false;
     }
 
